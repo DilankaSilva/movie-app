@@ -43,6 +43,9 @@ const LoginPage = () => {
         <Typography variant="h6" gutterBottom align="center" sx={{ color: '#1B263B' }}>
           Login
         </Typography>
+        <Typography variant="body3" gutterBottom align="center" sx={{ color: '#1B263B' }}>
+          used username and password as admin (testing)
+        </Typography>
         <form onSubmit={handleSubmit}>
           <TextField
             label="Username"
