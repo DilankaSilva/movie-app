@@ -32,17 +32,19 @@ export const getPopularMovies = async () => {
 };
 
 
-export const getAllMovies = async (page = 1) => {
+export const getAllMovies = async ({ page = 1, year, rating }) => {
   try {
-    const response = await tmdbApi.get('/discover/movie', {
-      params: {
-        language: 'en-US',
-        sort_by: 'popularity.desc', 
-        page: page, // Fetch a specific page (default: 1)
-      },
-    });
-    return response.data.results;
+    const params = {
+      language: 'en-US',
+      sort_by: 'popularity.desc', 
+      page: page,
+    };
 
+    if (year) params.primary_release_year = parseInt(year, 10);
+    if (rating) params['vote_average.gte'] = parseFloat(rating);
+
+    const response = await tmdbApi.get('/discover/movie', { params });
+    return response.data.results;
   } catch (error) {
     console.error('Error fetching all movies:', error);
     return [];

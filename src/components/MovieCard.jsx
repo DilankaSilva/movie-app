@@ -17,10 +17,14 @@ import { useNavigate } from 'react-router-dom';
 import { useMovie } from '../context/MovieContext';
 import NoProfile from "../assets/no-poster.jpg";
 
+// this is movie card  as reusable component and also use movieRating componet as well. 
+// And use props as well to display movie details by unique id
+
 const MovieCard = ({ movie }) => {
-  const releaseYear = movie.release_date?.split('-')[0];
-  const navigate = useNavigate();
-  const { favorites, addFavorite, removeFavorite } = useMovie();
+  const releaseYear = movie.release_date?.split('-')[0]; // take exact year part
+  const navigate = useNavigate(); // for navigate purpose
+
+  const { favorites, addFavorite, removeFavorite } = useMovie(); // moviecotext api for add  & remove movies from favorites
 
   const isFavorite = favorites.some(fav => fav.id === movie.id);
 
@@ -28,6 +32,7 @@ const MovieCard = ({ movie }) => {
     navigate(`/movie-details/${movie.id}`);
   };
 
+  // toggle fuction for add and remove the movie from favourites
   const handleFavoriteToggle = (e) => {
     
     if (isFavorite) {
@@ -51,11 +56,14 @@ const MovieCard = ({ movie }) => {
         bgcolor: 'background.paper',
         overflow: 'hidden',
         border: '1px solid',
-        borderColor: 'divider',
-        cursor: 'pointer'
+        borderColor: 'grey',
+        cursor: 'pointer',
+        maxWidth:'200px'
       }}
       onClick={handleClick}
     >
+
+
       <Box sx={{ position: 'relative' }}>
         <CardMedia
           component="img"
@@ -132,7 +140,8 @@ const MovieCard = ({ movie }) => {
         >
           {movie.title}
         </Typography>
-        
+
+        {/* MovieRating component */}
         <MovieRating rating={movie.vote_average} voteCount={movie.vote_count} />
         
         <Stack direction="row" justifyContent="space-between">
@@ -142,7 +151,7 @@ const MovieCard = ({ movie }) => {
               sx={{ mr: 0.5, color: 'primary.main' }} 
             />
             <Typography variant="body2" color="text.secondary">
-              {releaseYear || 'N/A'}
+              {releaseYear || 'N/A'} 
             </Typography>
           </Box>
         </Stack>

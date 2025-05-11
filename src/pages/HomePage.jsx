@@ -8,20 +8,22 @@ import {
   Box,
   Container,
   useMediaQuery,
+  Stack,
   CircularProgress,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
-import {useMovie} from "../context/MovieContext";
+import { useMovie } from "../context/MovieContext";
 import SearchBar from "../components/SerachBar";
 import { getTrendingMovies, getAllMovies, searchMovies } from "../services/api";
 import MovieCard from "../components/MovieCard";
+import MovieFilter from "../components/MovieFilter";
 import SearchResults from "../components/SearchResults";
 import MovieIcon from "@mui/icons-material/Movie";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 
 const HomePage = () => {
   const { logout } = useAuth();
-  const { lastsearch, setLastsearch} = useMovie();
+  const { lastsearch, setLastsearch } = useMovie();
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [allMovies, setAllMovies] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -31,8 +33,9 @@ const HomePage = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingAll, setLoadingAll] = useState(false);
+  const [filters, setFilters] = useState({ year: "", rating: "" });
 
-  const isMobile = useMediaQuery("(max-width:600px)");
+  // const isMobile = useMediaQuery("(max-width:600px)");
 
   // Fetch initial movies
   useEffect(() => {
@@ -46,6 +49,12 @@ const HomePage = () => {
     };
     fetchMovies();
   }, []);
+  // This is for useEffect to reset pagination when filters change
+  useEffect(() => {
+    setPage(1);
+    setAllMovies([]);
+    setHasMore(true);
+  }, [filters.year, filters.rating]);
 
   // All movies pagination
   const fetchAllMovies = useCallback(async () => {
@@ -53,7 +62,11 @@ const HomePage = () => {
 
     setLoadingAll(true);
     try {
-      const newMovies = await getAllMovies(page);
+      const newMovies = await getAllMovies({
+        page,
+        year: filters.year,
+        rating: filters.rating,
+      });
       if (newMovies.length === 0) {
         setHasMore(false);
       } else {
@@ -64,7 +77,7 @@ const HomePage = () => {
     } finally {
       setLoadingAll(false);
     }
-  }, [page, hasMore]);
+  }, [page, hasMore, filters.year, filters.rating]);
 
   useEffect(() => {
     fetchAllMovies();
@@ -74,7 +87,7 @@ const HomePage = () => {
     setPage((prev) => prev + 1);
   };
 
-    useEffect(() => {
+  useEffect(() => {
     if (lastsearch) {
       setSearchQuery(lastsearch.query);
       setSearchResults(lastsearch.results);
@@ -82,27 +95,30 @@ const HomePage = () => {
     }
   }, [lastsearch]);
 
-  const handleSearch = useCallback(async (query) => {
-    if (!query.trim()) {
-      setIsSearching(false);
-      setSearchResults([]);
-      return;
-    }
+  const handleSearch = useCallback(
+    async (query) => {
+      if (!query.trim()) {
+        setIsSearching(false);
+        setSearchResults([]);
+        return;
+      }
 
-    try {
-      setSearchLoading(true);
-      setIsSearching(true);
-      setSearchQuery(query);
-      const data = await searchMovies(query);
-      setSearchResults(data.results);
-      setLastsearch({ query, results: data.results });
-    } catch (error) {
-      console.error('Error searching movies:', error);
-      setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  }, [setLastsearch]);
+      try {
+        setSearchLoading(true);
+        setIsSearching(true);
+        setSearchQuery(query);
+        const data = await searchMovies(query);
+        setSearchResults(data.results);
+        setLastsearch({ query, results: data.results });
+      } catch (error) {
+        console.error("Error searching movies:", error);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    },
+    [setLastsearch]
+  );
 
   return (
     <Container maxWidth="2xl" sx={{ py: 4 }}>
@@ -134,7 +150,7 @@ const HomePage = () => {
                 fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
               }}
             >
-              🎬 Movie Explorer
+              Movie Explorer
             </Typography>
 
             <Typography
@@ -158,98 +174,117 @@ const HomePage = () => {
         </Box>
       </Paper>
 
-      {isSearching ? (
+      {isSearching && (
         <SearchResults
           results={searchResults}
           loading={searchLoading}
           query={searchQuery}
         />
-      ) : (
-        <Paper
-          elevation={2}
-          sx={{ borderRadius: 2, overflow: "hidden", mb: 4 }}
-        >
-          {/* Trending Section */}
-          <Box sx={{ bgcolor: '#E0E1DD', py: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", px: 3, py: 1 }}>
-              <TrendingUpIcon sx={{ mr: 1, color: '#415A77' }} />
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: "bold", color: '#1B263B' }}
-              >
-                Trending This Week
-              </Typography>
-            </Box>
-            <Divider sx={{ mx: 3, borderColor: '#778DA9', mb: 2 }} />
-            <Box
-              sx={{
-                display: "flex",
-                overflowX: "auto",
-                gap: 2,
-                px: 3,
-                pb: 3,
-              }}
-            >
-              {trendingMovies.map((movie) => (
-                <Box key={movie.id} sx={{ minWidth: 220 }}>
-                  <MovieCard movie={movie} />
-                </Box>
-              ))}
-            </Box>
-          </Box>
+      )}
 
-          {/* All Movies Section with Pagination */}
-          <Box sx={{ py: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", px: 3, py: 1 }}>
-              <MovieIcon sx={{ mr: 1, color: '#415A77' }} />
+      <Paper elevation={2} sx={{ borderRadius: 2, overflow: "hidden", mb: 4 }}>
+        {/* Trending Section */}
+        <Box sx={{ bgcolor: "#E0E1DD", py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", px: 3, py: 1 }}>
+            <TrendingUpIcon sx={{ mr: 1, color: "#415A77" }} />
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: "bold", color: "#1B263B" }}
+            >
+              Trending This Week
+            </Typography>
+          </Box>
+          <Divider sx={{ mx: 3, borderColor: "#778DA9", mb: 2 }} />
+          <Box
+            sx={{
+              display: "flex",
+              overflowX: "auto",
+              gap: 2,
+              px: 3,
+              pb: 3,
+            }}
+          >
+            {trendingMovies.map((movie) => (
+              <Box key={movie.id} sx={{ minWidth: 220 }}>
+                <MovieCard movie={movie} />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* All Movies Section with Pagination */}
+        <Box sx={{ py: 2 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            spacing={2}
+            sx={{
+              px: 3,
+              py: 2,
+              bgcolor: "background.paper",
+              borderRadius: 2,
+              boxShadow: 1,
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <MovieIcon sx={{ color: "#415A77", fontSize: 30 }} />
               <Typography
                 variant="h5"
-                sx={{ fontWeight: "bold", color: '#1B263B' }}
+                sx={{ fontWeight: "bold", color: "#1B263B" }}
               >
                 All Movies
               </Typography>
+            </Stack>
+
+            <MovieFilter onApplyFilters={setFilters} />
+          </Stack>
+          <Divider sx={{ mx: 3, borderColor: "#778DA9", mb: 2 }} />
+
+          {loadingAll && allMovies.length === 0 ? (
+            <Box sx={{ m: 3, p: 3, textAlign: "center" }}>
+              <CircularProgress sx={{ color: "#415A77" }} />
+              <Typography sx={{ mt: 2 }}>Loading movies...</Typography>
             </Box>
-            <Divider sx={{ mx: 3, borderColor: '#778DA9', mb: 2 }} />
-
-            {loadingAll && allMovies.length === 0 ? (
-              <Box sx={{ p: 3, textAlign: "center" }}>
-                <CircularProgress sx={{ color: '#415A77' }} />
-                <Typography sx={{ mt: 2 }}>Loading movies...</Typography>
-              </Box>
-            ) : (
-              <>
-                <Grid container spacing={2} sx={{ p: 3 }}>
-                  {allMovies.map((movie) => (
-                    <Grid item key={movie.id} xs={12} sm={6} md={4} lg={3} sx={{display:'flex'}}>
-                      <MovieCard movie={movie} />
-                    </Grid>
-                  ))}
-                </Grid>
-
-                {hasMore && (
-                  <Box
-                    sx={{ display: "flex", justifyContent: "center", pb: 3 }}
+          ) : (
+            <>
+              <Grid container spacing={5} sx={{ p: 3, bgcolor: "#E0E1DD" }} justifyContent='center'>
+                {allMovies.map((movie) => (
+                  <Grid
+                    item
+                    key={movie.id}
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    lg={2}
+                    sx={{ display: "flex" }}
                   >
-                    <Button
-                      variant="contained"
-                      onClick={handleLoadMore}
-                      disabled={loadingAll}
-                      sx={{
-                        borderRadius: 2,
-                        px: 4,
-                        bgcolor: '#415A77',
-                        "&:hover": { bgcolor: '#1B263B' },
-                      }}
-                    >
-                      Load More
-                    </Button>
-                  </Box>
-                )}
-              </>
-            )}
-          </Box>
-        </Paper>
-      )}
+                    <MovieCard movie={movie} />
+                  </Grid>
+                ))}
+              </Grid>
+
+              {hasMore && (
+                <Box sx={{ display: "flex", justifyContent: "center", pb: 3 }}>
+                  <Button
+                    variant="contained"
+                    onClick={handleLoadMore}
+                    disabled={loadingAll}
+                    sx={{
+                      borderRadius: 2,
+                      px: 4,
+                      bgcolor: "#415A77",
+                      "&:hover": { bgcolor: "#1B263B" },
+                    }}
+                  >
+                    Load More
+                  </Button>
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
+      </Paper>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
         <Button
@@ -257,11 +292,11 @@ const HomePage = () => {
           onClick={logout}
           sx={{
             borderRadius: 2,
-            color: '#1B263B',
-            borderColor: '#1B263B',
+            color: "#1B263B",
+            borderColor: "#1B263B",
             "&:hover": {
-              borderColor: '#415A77',
-              color: '#415A77',
+              borderColor: "#415A77",
+              color: "#415A77",
             },
           }}
         >

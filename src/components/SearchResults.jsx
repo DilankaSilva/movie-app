@@ -3,6 +3,8 @@ import { Paper, Box, Typography, Grid, CircularProgress } from '@mui/material';
 import MovieCard from './MovieCard';
 import MovieIcon from '@mui/icons-material/Movie';
 
+// Use separate file for show seerach results part its helps to minimize the code in HomePage
+// Use Props
 const SearchResults = ({ results, loading, query }) => {
   return (
     <Paper elevation={2} sx={{ 
@@ -23,13 +25,13 @@ const SearchResults = ({ results, loading, query }) => {
           <Typography variant="h5" sx={{ 
             fontWeight: "bold", 
             color: '#E0E1DD',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
           }}>
             Search Results for "{query}"
           </Typography>
         </Box>
         
         <Box sx={{ p: 3 }}>
+          {/* use conditional rending for the if still searching , not found and display the movies if found. use MovieCard Component */}
           {loading ? (
             <Box sx={{ 
               display: 'flex', 

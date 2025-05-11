@@ -1,7 +1,8 @@
-// src/components/SearchBar.js
 import React, { useState } from 'react';
 import { TextField, InputAdornment, IconButton, Box } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+
+// this is SearchBar componet 
 
 function SearchBar({ onSearch }) {
   const [query, setQuery] = useState('');
